@@ -1,61 +1,96 @@
-# CRM Noretel y OpenWA
+# NoreTel CRM + OpenWA
 
-Código del backend Laravel y del gateway OpenWA para una instalación independiente de evaluación. No contiene bases de clientes ni sesiones de producción. **Los pasos no se han ejecutado de extremo a extremo en esta distribución**; compruebe las versiones y dependencias en los archivos de cada proyecto.
+Esta distribución reúne el **backend real de NoreTel CRM** y el gateway OpenWA para revisión académica y ejecución local aislada. No es una aplicación de demostración independiente. La automatización de pagos descrita aquí corresponde a la validación de evidencias de **Yape**; OpenWA, OCR y el dispositivo receptor son componentes del flujo cuando se habilitan.
 
-## 1. Requisitos
+> **Importante:** no es una instalación lista para producción. No contiene bases de clientes, secretos ni sesiones de WhatsApp. La instalación completa y el flujo de pago de extremo a extremo no se han validado en esta distribución.
 
-- PHP 8.1 o superior compatible con `backend/composer.lock`, Composer 2 y las extensiones PHP indicadas por Composer.
-- MySQL o MariaDB y una base de datos nueva, exclusiva para pruebas.
-- Node.js y npm compatibles con `openwa/package-lock.json`; Docker y Docker Compose si se utiliza el despliegue con contenedores.
-- Una cuenta y un teléfono de WhatsApp de prueba si se desea conectar una sesión real. Nunca utilice sesiones ni datos de clientes.
+## Componentes
 
-## 2. Backend Laravel
+| Ruta | Función |
+| --- | --- |
+| [`backend/`](backend/) | CRM en Laravel 10: módulos de clientes, servicios, contratos, operaciones y facturación. |
+| [`openwa/`](openwa/) | Gateway de WhatsApp con API y panel; se ejecuta como servicio separado mediante Docker Compose. |
+| [`backend/.env.example`](backend/.env.example) y [`openwa/.env.example`](openwa/.env.example) | Plantillas de configuración local. No contienen las credenciales que se deben usar en producción. |
 
-En `backend/`:
+## Requisitos
 
-```bash
-composer install
+- **Backend:** PHP `^8.1`, Composer, Node.js/npm compatibles con `backend/package-lock.json` y MySQL o MariaDB.
+- **OpenWA:** Docker y Docker Compose. Si se vinculará una sesión, use un teléfono y una cuenta de WhatsApp de prueba autorizados.
+- **Base de datos:** cree una base local nueva y vacía, exclusiva para esta prueba. No conecte el CRM a la base de la empresa.
+
+## Inicio local
+
+Ejecute el backend y OpenWA en terminales separadas. Desde la carpeta raíz del repositorio:
+
+### 1. Preparar y arrancar el backend
+
+```powershell
+cd backend
 cp .env.example .env
+composer install
 php artisan key:generate
 ```
 
-En Windows, en lugar de `cp`, use `copy .env.example .env`. Cree `storage/framework/sessions` antes de iniciar Laravel: en Unix use `mkdir -p storage/framework/sessions`; en PowerShell, `New-Item -ItemType Directory -Force storage/framework/sessions`. Edite `.env` con una base de datos vacía **local y exclusiva para pruebas**. Verifique `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` y `DB_PASSWORD` antes de continuar. No use la base de la empresa.
+Edite `backend/.env` y configure la conexión a su base local: `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` y `DB_PASSWORD`. Después, cree las tablas y compile los recursos del frontend:
 
-```bash
+```powershell
 php artisan migrate
 npm ci
 npm run build
 php artisan serve
 ```
 
-Si va a crear los usuarios y datos de ejemplo, establezca `DEMO_SEED_PASSWORD` en el `.env` local y ejecute `php artisan db:seed` **solo sobre la base de pruebas nueva**. El seeder de usuarios limpia asignaciones de permisos; no lo ejecute en una base existente. Un usuario de ejemplo es `administrador@example.test`; la contraseña es la que haya configurado. No se incluyen datos de clientes.
+El backend queda disponible normalmente en <http://127.0.0.1:8000>.
 
-**Limitación conocida:** en una comprobación anterior con MariaDB 10.4, la migración `2026_07_15_000001_allow_multiple_contracts_per_customer_router.php` falló al eliminar un índice requerido por una clave foránea. Esta distribución conserva la migración original: debe resolverse y volver a probarse en una base de pruebas antes de afirmar que la instalación desde cero funciona.
+**Opcional — datos de prueba:** en `backend/.env`, defina una contraseña local propia en `DEMO_SEED_PASSWORD` y ejecute `php artisan db:seed` solo en la base nueva. No use este comando en una base existente, compartida o de producción.
 
-## 3. OpenWA
+### 2. Arrancar OpenWA
 
-El proyecto completo está en `openwa/`. Revise `docker-compose.yml`, los puertos y `.env.example` antes de usar Docker. En un entorno de prueba, copie el ejemplo a `.env`, sustituya todos los valores sensibles por credenciales nuevas y ejecute desde `openwa/`:
+En una segunda terminal, desde la raíz del repositorio:
 
-```bash
-docker compose up -d --build
+```powershell
+cd openwa
+cp .env.example .env
 ```
 
-La API usa el puerto 2785 por defecto y ofrece documentación en `http://localhost:2785/api/docs`. El panel depende de la configuración de Docker y sus puertos. Cree una sesión de prueba y vincúlela mediante su QR. El directorio `data/` y los archivos de sesión son privados y no se deben subir a Git.
+Edite `openwa/.env` y establezca credenciales nuevas de prueba, incluida `API_MASTER_KEY`. No copie llaves, sesiones ni valores de producción. Luego inicie los contenedores:
 
-## 4. Conectar OpenWA y Laravel
+```powershell
+docker compose up -d --build
+docker compose ps
+```
 
-Las automatizaciones y el OCR vienen desactivados en el ejemplo; actívelos solo para pruebas controladas. En el `.env` del backend configure la URL de la API OpenWA accesible desde Laravel, una clave de API nueva, el identificador de la sesión de prueba y un secreto nuevo para el webhook. El evento `message.received` debe apuntar a `/api/billing/yape/openwa/webhook` del backend; utilice el mismo secreto en ambos lados. Si los procesos están en contenedores o máquinas distintas, `localhost` puede referirse a equipos diferentes: use una dirección de prueba accesible entre ellos.
+Con la configuración predeterminada, los servicios se exponen solo en el equipo local:
 
-El OCR y la señal del teléfono receptor son componentes adicionales del flujo Yape; la API por sí sola no reproduce el proceso completo. Nunca ejecute pruebas enviando mensajes o pagos a clientes reales.
+| Servicio | Dirección |
+| --- | --- |
+| Panel OpenWA | <http://localhost:2886> |
+| API OpenWA | <http://localhost:2785/api/docs> |
+| Estado de la API | <http://localhost:2785/api/health> |
 
-## 5. Pruebas y seguridad
+Si necesita probar una sesión real, cree una sesión de prueba y vincúlela con el QR del panel. Mantenga `data/`, archivos de sesión y `.env` fuera de Git. Si Laravel y OpenWA se ejecutan en contenedores o equipos distintos, configure una dirección de API alcanzable entre ellos; `localhost` puede apuntar al contenedor equivocado.
 
-Desde `backend/` se puede ejecutar `php artisan test`; `phpunit.xml` configura SQLite en memoria, aunque algunas pruebas pueden necesitar un motor MySQL/MariaDB de pruebas. Antes de compartir revise todos los archivos y la autorización para distribuir código de la empresa. Esta copia no contiene el historial Git original; no copie `.env`, bases de datos, logs, capturas, tokens ni sesiones.
+### 3. Conectar el flujo Yape (opcional)
 
-El clasificador opcional `backend/tools/customer_bi_classifier/bi_classifier.py` requiere especificar `BI_API_URL` y `BI_API_TOKEN`, o los argumentos correspondientes, para un servicio de prueba; no trae una URL ni un token de producción por defecto.
+Para probar la integración, configure únicamente credenciales y destinos de prueba. En `backend/.env`, revise las variables `YAPE_OPENWA_API_URL`, `YAPE_OPENWA_API_KEY`, `YAPE_OPENWA_SESSION` y `YAPE_OPENWA_WEBHOOK_SECRET`. Configure en OpenWA el webhook `message.received` para apuntar a `/api/billing/yape/openwa/webhook` del backend y use el mismo secreto de prueba.
 
-La validación aislada del control de token BI se ejecuta desde `backend/` con `php tests/Standalone/BiTokenGuardTest.php`; esta comprobación no requiere base de datos.
+El OCR y la evidencia obtenida desde el teléfono receptor son componentes adicionales del flujo; arrancar el backend y OpenWA por separado no demuestra que la conciliación Yape esté funcionando. `YAPE_RECEIVER_PHONE` está vacío en la plantilla, por lo que no se deben esperar instrucciones de pago Yape en recordatorios hasta configurar un destino de prueba.
 
-La herramienta Android del receptor es opcional y no incluye el binario `gradle-wrapper.jar`; para compilarla se debe obtener o regenerar el wrapper desde una distribución Gradle confiable. Los archivos fuente del backend y OpenWA no dependen de ese binario para arrancar.
+## Comprobación
 
-La variable opcional `WHATSAPP_BUSINESS_DESTINATION` identifica el destino comercial en la metadata de clics. Déjela vacía si no cuenta con un destino de prueba; si necesita probarla, configure exclusivamente un valor ficticio. No se define ningún número real por defecto. `YAPE_RECEIVER_PHONE` también está vacío por defecto: mientras no se configure, los recordatorios no incluyen instrucciones de pago Yape.
+- Abra <http://127.0.0.1:8000> para comprobar que Laravel responde.
+- Ejecute `docker compose ps` dentro de `openwa/` y consulte la documentación o el estado de la API indicados arriba.
+- Para ejecutar las pruebas del backend, desde `backend/` use `php artisan test`. Algunas pruebas pueden requerir un motor MySQL/MariaDB de prueba.
+
+Estas comprobaciones locales no equivalen a una validación completa del flujo de pagos con WhatsApp, OCR y teléfono receptor.
+
+## Limitación conocida
+
+En una comprobación previa con MariaDB 10.4 falló la migración `2026_07_15_000001_allow_multiple_contracts_per_customer_router.php`: intenta eliminar un índice requerido por una clave foránea. La migración original se conserva en esta copia. Si falla durante `php artisan migrate`, detenga la prueba y use una base local aislada; no intente resolverlo sobre datos de producción. La instalación desde cero debe volver a probarse después de corregir esa incompatibilidad.
+
+## Seguridad y privacidad
+
+- Use bases, números, sesiones, contraseñas, tokens y secretos creados exclusivamente para pruebas.
+- No suba `.env`, bases de datos, comprobantes, logs, sesiones de WhatsApp ni datos personales.
+- No envíe mensajes ni pagos de prueba a clientes reales.
+- Esta copia no incluye el historial Git original; mantenga los datos de operación y las credenciales fuera de la distribución.
