@@ -1,0 +1,20 @@
+{
+    "name": "Billing",
+    "alias": "billing",
+    "description": "Módulo de cobranza y pagos para ISP CRM",
+    "keywords": [],
+    "priority": 0,
+    "order": 6,
+    "providers": [
+        "Modules\\Billing\\Providers\\BillingServiceProvider",
+        "Modules\\Billing\\Providers\\RouteServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Core", "Contract"],
+    "minimumCoreVersion": "1.0.0",
+    "title": "Cobranza y Pagos",
+    "icon": "fa fa-file-invoice-dollar",
+    "author": "NorETEL",
+    "version": "1.0.0"
+}

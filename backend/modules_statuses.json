@@ -1,0 +1,9 @@
+{
+    "Core": true,
+    "Customer": true,
+    "Services": true,
+    "Contract": true,
+    "Billing": true,
+    "Network": true,
+    "Operations": true
+}

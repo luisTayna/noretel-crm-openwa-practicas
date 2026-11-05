@@ -1,0 +1,58 @@
+/* Estilos base para corregir el layout y evitar solapamientos */
+
+:root {
+    --sidebar-width: 260px;
+    --primary-color: #2c5282;
+    --dark-color: #1a202c;
+}
+
+/* Sidebar en escritorio: mantenemos el flujo de flexbox para que no tape nada */
+#sidebar {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    height: 100vh;
+    background-color: var(--dark-color);
+    z-index: 1000;
+    transition: all 0.3s ease;
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
+}
+
+/* El contenido principal fluye naturalmente al lado del sidebar */
+.content-wrapper {
+    flex: 1;
+    min-height: 100vh;
+    background-color: #f8fafc;
+    position: relative;
+    z-index: 1;
+    overflow-x: hidden;
+}
+
+/* Ajuste para móviles */
+@media (max-width: 991.98px) {
+    #sidebar {
+        position: fixed;
+        left: calc(-1 * var(--sidebar-width));
+    }
+    
+    #sidebar.active {
+        left: 0;
+    }
+    
+    .content-wrapper {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+/* Asegurar que los botones de acción sean siempre cliqueables */
+.d-flex.justify-content-between.mt-4 {
+    position: relative;
+    z-index: 10;
+}
+
+#nextBtn, #prevBtn, #submitBtn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}

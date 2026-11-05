@@ -1,0 +1,23 @@
+{
+    "name": "nwidart/contract",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "usuario1@example.test"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Contract\\": ""
+        }
+    }
+}

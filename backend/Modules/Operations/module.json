@@ -1,0 +1,11 @@
+{
+    "name": "Operations",
+    "alias": "operations",
+    "description": "Operational workflow orchestration for customer service activation.",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Operations\\Providers\\OperationsServiceProvider"
+    ],
+    "files": []
+}

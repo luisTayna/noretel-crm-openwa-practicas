@@ -1,0 +1,26 @@
+{
+    "name": "Contract",
+    "alias": "contract",
+    "description": "Módulo de gestión de contratos e instalaciones para ISP CRM",
+    "keywords": [],
+    "priority": 2,
+    "order": 3,
+    "providers": [
+        "Modules\\Contract\\Providers\\ContractServiceProvider",
+        "Modules\\Contract\\Providers\\RouteServiceProvider",
+        "Modules\\Contract\\Providers\\EventServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": [
+        "Core",
+        "Customer",
+        "Services",
+        "Inventory"
+    ],
+    "minimumCoreVersion": "1.0.0",
+    "title": "Contratos e Instalaciones",
+    "icon": "fa fa-file-signature",
+    "author": "NorETEL",
+    "version": "1.0.0"
+}

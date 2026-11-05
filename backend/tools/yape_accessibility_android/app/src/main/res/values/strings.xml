@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">NoreTel Yape Notification Receiver</string>
+    <string name="notification_listener_description">Captura notificaciones de Yape para conciliación NoreTel. Actívalo solo en el celular dedicado.</string>
+</resources>
